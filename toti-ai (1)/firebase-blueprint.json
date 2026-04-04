@@ -1,0 +1,150 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user profile information.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User's email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User's display name"
+        },
+        "photoURL": {
+          "type": "string",
+          "format": "url",
+          "description": "User's profile photo URL"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Account creation timestamp"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "admin"],
+          "description": "User's role"
+        },
+        "credits": {
+          "type": "number",
+          "description": "User's current credits"
+        }
+      },
+      "required": ["uid", "email", "createdAt", "role"]
+    },
+    "CreditHistory": {
+      "title": "Credit History",
+      "description": "Stores transaction history for user credits.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "User UID"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["purchase", "usage", "event"],
+          "description": "Transaction type"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of credits (positive or negative)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the transaction"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Transaction timestamp"
+        }
+      },
+      "required": ["uid", "type", "amount", "description", "timestamp"]
+    },
+    "SearchHistory": {
+      "title": "Search History",
+      "description": "Stores user search history.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "User UID"
+        },
+        "address": {
+          "type": "string",
+          "description": "Searched address"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Search timestamp"
+        }
+      },
+      "required": ["uid", "address", "timestamp"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Stores bulletin board posts.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Author UID"
+        },
+        "title": {
+          "type": "string",
+          "description": "Post title"
+        },
+        "content": {
+          "type": "string",
+          "description": "Post content"
+        },
+        "password": {
+          "type": "string",
+          "description": "Optional password for post protection"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["uid", "title", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "User profiles collection"
+    },
+    "/searchHistory/{historyId}": {
+      "schema": {
+        "$ref": "#/entities/SearchHistory"
+      },
+      "description": "Search history collection"
+    },
+    "/posts/{postId}": {
+      "schema": {
+        "$ref": "#/entities/Post"
+      },
+      "description": "Bulletin board posts collection"
+    },
+    "/creditHistory/{historyId}": {
+      "schema": {
+        "$ref": "#/entities/CreditHistory"
+      },
+      "description": "User credit transaction history"
+    }
+  }
+}
