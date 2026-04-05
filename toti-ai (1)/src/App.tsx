@@ -166,22 +166,54 @@ export default function App() {
     }
   }, [user]);
 
-  const handleGoogleLogin = async () => {
+const handleGoogleLogin = async () => {
     try {
       setAuthError('');
       setIsLoading(true);
-      console.log("Starting Google login...");
-      const result = await signInWithPopup(auth, googleProvider);
+      console.log("Starting Google login with custom popup monitor...");
+
+      // --- [수동 감지 로직 시작] ---
+      let popupWindow: Window | null = null;
+      const originalOpen = window.open;
+
+      // 1. window.open 가로채서 팝업창 참조값 가져오기
+      window.open = function (...args: any[]) {
+        popupWindow = originalOpen.apply(window, args as any);
+        window.open = originalOpen; // 즉시 복구
+        return popupWindow;
+      };
+
+      let pollInterval: number | undefined = undefined;
+
+      // 2. 팝업창이 닫히는지 0.1초마다 감시하는 약속
+      const popupClosedPromise = new Promise<never>((_, reject) => {
+        pollInterval = window.setInterval(() => {
+          if (popupWindow?.closed) {
+            if (pollInterval) window.clearInterval(pollInterval);
+            reject({ code: 'auth/popup-closed-by-user' });
+          }
+        }, 100);
+      });
+
+      // 3. 실제 구글 로그인 시도
+      const signInPromise = signInWithPopup(auth, googleProvider);
+
+      // 4. 로그인 성공 vs 팝업 닫힘 중 먼저 일어나는 쪽을 채택
+      const result = await Promise.race([signInPromise, popupClosedPromise]);
+      
+      // 인터벌 청소
+      if (pollInterval) window.clearInterval(pollInterval);
+      // --- [수동 감지 로직 끝] ---
+
       const loggedInUser = result.user;
       console.log("Google login success:", loggedInUser.email);
       
-      // Check if user exists in Firestore
+      // [기존 Firestore 로직 시작]
       const userRef = doc(db, 'users', loggedInUser.uid);
       const userSnap = await getDoc(userRef);
       
       if (!userSnap.exists()) {
         console.log("Creating new user profile...");
-        // Create new user profile
         const isSuperAdmin = loggedInUser.email === 'cloudnine0831@gmail.com';
         try {
           await setDoc(userRef, {
@@ -194,7 +226,6 @@ export default function App() {
             credits: isSuperAdmin ? 999999 : 500
           });
 
-          // Add welcome credits to history
           await addDoc(collection(db, 'creditHistory'), {
             uid: loggedInUser.uid,
             type: 'event',
@@ -208,13 +239,19 @@ export default function App() {
       }
       
       setIsLoginModalOpen(false);
+      // [기존 Firestore 로직 끝]
+
     } catch (error: any) {
       console.error("Google login error details:", error);
       let errorMessage = "구글 로그인에 실패했습니다.";
+      
+      // 에러 코드별 메시지 처리
       if (error.code === 'auth/unauthorized-domain') {
-        errorMessage = "현재 도메인(localhost:3000 등)이 Firebase에 승인되지 않았습니다. Firebase 콘솔(Authentication > Settings > Authorized domains)에서 현재 도메인을 추가해주세요.";
+        errorMessage = "현재 도메인이 Firebase에 승인되지 않았습니다. Firebase 콘솔 설정을 확인해주세요.";
       } else if (error.code === 'auth/popup-blocked') {
         errorMessage = "팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.";
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = "로그인 창이 닫혔습니다. 다시 시도해주세요.";
       } else if (error.message) {
         errorMessage = error.message;
       }
