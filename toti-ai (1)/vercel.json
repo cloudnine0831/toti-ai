@@ -1,10 +1,4 @@
 {
-  "rewrites": [
-    {
-      "source": "/__/auth/:path*",
-      "destination": "https://gen-lang-client-0030204935.firebaseapp.com/__/auth/:path*"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -14,6 +8,12 @@
           "value": "same-origin-allow-popups"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/__/auth/:path*",
+      "destination": "https://gen-lang-client-0030204935.firebaseapp.com/__/auth/:path*"
     }
   ]
 }
