@@ -11,9 +11,9 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/__/auth/:path*",
-      "destination": "https://gen-lang-client-0030204935.firebaseapp.com/__/auth/:path*"
-    }
+    { "source": "/api/search-juso", "destination": "/api/search-juso.ts" },
+    { "source": "/api/vworld-geocoder", "destination": "/api/vworld-geocoder.ts" },
+    { "source": "/api/kakao-geocoder", "destination": "/api/kakao-geocoder.ts" },
+    { "source": "/__/auth/:path*", "destination": "https://gen-lang-client-0030204935.firebaseapp.com/__/auth/:path*" }
   ]
 }
